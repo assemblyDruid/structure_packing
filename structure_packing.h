@@ -253,3 +253,48 @@ struct bitfield
     int   septet:7;          // 7 bits
     int   IMPLICIT_PADDING:1 // 1 bit of slop
 };
+
+// Essentially, the padding could occur before or after the payload bits. It is also worth noting
+// that the padding bits do not have to be initialized (to anything).
+
+// EX10) This struct takes up a single 32 bit word (C99)
+struct word32
+{
+    int bigField:31;
+    int smallField:1;
+};
+
+// EX11) This struct takes up two 32 bit words (C99)
+struct word64
+{
+    int bigField:31;
+    int smallField:1;
+    int bigField_2:31;
+    int smallField_2: 1;
+};
+
+// EX12) This struct takes up three 32 bit words (C99) with *31 slop bits*
+struct word96
+{
+    int bigField:31;
+    int smallField:1;
+    int bigField_2:32;
+    int smallField_2:1;
+    int smallField_3:1; // <-- Offending line. 31 bits of slop follow to enforce boundaries.
+};
+
+
+//
+//
+//
+// Structure Reordering
+//
+//
+//
+
+// Slop only occurs in two situations:
+//    1: Where small storage follows large storage with more strict alignment rules.
+//    2: A struct naturally ends beofre the stride address.
+//
+// The easiest way to eliminate slop is to order members by decreasing alignment.
+// Pointers first, then 4 byte types, then 2 bytes types, then 1.
